@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Real-Time 3D Sorting Visualizer | 인터랙티브 정렬 알고리즘 시각화</title>
 <!-- Three.js & OrbitControls for Real WebGL 3D -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -29,29 +29,41 @@
     font-family: "Pretendard", "Segoe UI", system-ui, -apple-system, sans-serif;
     background: radial-gradient(1300px 750px at 15% -5%, #15223e 0%, var(--bg) 65%);
     color: var(--text);
+    -webkit-tap-highlight-color: transparent;
   }
   .wrap { max-width: 1240px; margin: 0 auto; padding: 24px 18px 70px; }
 
   /* Header */
   header {
     display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  .header-top {
+    display: flex;
     justify-content: space-between;
-    align-items: flex-start;
+    align-items: center;
     flex-wrap: wrap;
-    gap: 16px;
-    margin-bottom: 22px;
+    gap: 12px;
+  }
+  .title-area {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
   }
   .title-area h1 {
-    margin: 0 0 6px;
-    font-size: 28px;
+    margin: 0;
+    font-size: 26px;
     letter-spacing: -0.5px;
     background: linear-gradient(90deg, #60a5fa, #c084fc, #38bdf8);
     -webkit-background-clip: text; background-clip: text; color: transparent;
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
   }
-  .title-area h1 .badge-3d {
+  .title-area .badge-3d {
     font-size: 11px;
     padding: 3px 8px;
     border-radius: 6px;
@@ -61,7 +73,12 @@
     letter-spacing: 0.5px;
     font-weight: 700;
   }
-  .title-area p { margin: 0; color: var(--muted); font-size: 14.5px; line-height: 1.5; }
+  header p.sub-desc {
+    margin: 0;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.5;
+  }
   .header-actions { display: flex; gap: 8px; align-items: center; }
 
   /* Buttons */
@@ -78,6 +95,7 @@
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
+    white-space: nowrap;
   }
   .icon-btn:hover { border-color: var(--accent); background: #1c283d; }
   .icon-btn.active {
@@ -100,7 +118,7 @@
   }
 
   /* Controls */
-  .controls-bar { display: flex; flex-direction: column; gap: 14px; }
+  .controls-bar { display: flex; flex-direction: column; gap: 12px; }
   .controls-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
   .algo-group { display: flex; flex-wrap: wrap; gap: 7px; }
   
@@ -153,7 +171,7 @@
     padding: 10px 14px;
     border-radius: 12px;
   }
-  .slider { display: flex; flex-direction: column; gap: 4px; min-width: 140px; flex: 1; }
+  .slider { display: flex; flex-direction: column; gap: 4px; min-width: 130px; flex: 1; }
   .slider label { font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; }
   .slider label b { color: var(--text); }
   input[type=range] { -webkit-appearance: none; width: 100%; height: 6px; border-radius: 6px; background: #202c40; outline: none; }
@@ -186,7 +204,7 @@
 
   /* 3D Stage Container */
   .stage-wrapper {
-    margin-top: 18px;
+    margin-top: 16px;
     position: relative;
     border-radius: 16px;
     overflow: hidden;
@@ -195,7 +213,7 @@
   }
   .stage {
     width: 100%;
-    height: 440px;
+    height: 420px;
     display: block;
     cursor: grab;
   }
@@ -204,19 +222,19 @@
   /* 3D Camera Controls Toolbar */
   .cam-toolbar {
     position: absolute;
-    top: 12px;
-    right: 12px;
+    top: 10px;
+    right: 10px;
     display: flex;
-    gap: 6px;
+    gap: 5px;
     z-index: 10;
   }
   .cam-btn {
-    background: rgba(15, 21, 34, 0.78);
+    background: rgba(15, 21, 34, 0.82);
     backdrop-filter: blur(8px);
     border: 1px solid rgba(255,255,255,0.12);
     color: #cbd5e1;
     font-size: 11px;
-    padding: 5px 9px;
+    padding: 5px 8px;
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.15s ease;
@@ -225,9 +243,9 @@
 
   .cam-hint {
     position: absolute;
-    bottom: 12px;
-    left: 14px;
-    font-size: 11.5px;
+    bottom: 10px;
+    left: 12px;
+    font-size: 11px;
     color: rgba(255,255,255,0.45);
     pointer-events: none;
     display: flex;
@@ -239,15 +257,15 @@
   /* Legend */
   .legend {
     display: flex;
-    gap: 18px;
-    margin-top: 14px;
+    gap: 16px;
+    margin-top: 12px;
     flex-wrap: wrap;
     color: var(--muted);
-    font-size: 12.5px;
+    font-size: 12px;
     align-items: center;
   }
-  .legend span { display: inline-flex; align-items: center; gap: 6px; }
-  .dot { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+  .legend span { display: inline-flex; align-items: center; gap: 5px; }
+  .dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
   .dot.c-default { background: #3b82f6; box-shadow: 0 0 6px rgba(59,130,246,0.5); }
   .dot.c-compare { background: #ffd166; box-shadow: 0 0 6px rgba(255,209,102,0.6); }
   .dot.c-swap { background: #ff477e; box-shadow: 0 0 6px rgba(255,71,126,0.7); }
@@ -292,7 +310,7 @@
   .stat-box .v { font-size: 20px; font-weight: 700; color: #fff; }
   .stat-box .v small { font-size: 12px; color: var(--muted); }
   .algo-title-display {
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 700;
     color: #60a5fa;
     display: block;
@@ -338,7 +356,6 @@
 
   /* Educational Grid */
   .edu-grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 20px; }
-  @media (max-width: 900px){ .edu-grid { grid-template-columns: 1fr; } }
 
   .edu-block {
     background: #0b1019;
@@ -368,7 +385,7 @@
     border-radius: 10px;
     padding: 12px 14px;
     font-family: "JetBrains Mono", "Fira Code", monospace;
-    font-size: 12.5px;
+    font-size: 12px;
     color: #e2e8f0;
     line-height: 1.6;
     overflow-x: auto;
@@ -404,23 +421,127 @@
     border-top: 1px solid rgba(255,255,255,0.06);
     padding-top: 24px;
   }
+
+  /* ========================================================= */
+  /* Mobile Responsive Optimizations (Screen width <= 680px)   */
+  /* ========================================================= */
+  @media (max-width: 680px) {
+    .wrap { padding: 14px 10px 60px; }
+    
+    /* Header compact */
+    header { margin-bottom: 14px; gap: 6px; }
+    .header-top { gap: 8px; }
+    .title-area h1 { font-size: 18px; }
+    .title-area .badge-3d { font-size: 10px; padding: 2px 6px; }
+    header p.sub-desc { font-size: 12px; line-height: 1.45; }
+    .icon-btn { font-size: 11.5px; padding: 6px 10px; }
+
+    /* Card padding */
+    .card { padding: 14px 12px; border-radius: 14px; }
+    .controls-bar { gap: 10px; }
+
+    /* Algorithm buttons in clean 3-column grid */
+    .algo-group {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 5px;
+      width: 100%;
+    }
+    .algo-group button {
+      padding: 8px 2px;
+      font-size: 11.5px;
+      text-align: center;
+      white-space: nowrap;
+      border-radius: 8px;
+    }
+
+    /* Action buttons: 3-column grid */
+    .action-btns {
+      display: grid;
+      grid-template-columns: 1.25fr 1fr 1fr;
+      gap: 5px;
+      width: 100%;
+    }
+    .action-btns button {
+      padding: 9px 2px;
+      font-size: 12px;
+      text-align: center;
+      border-radius: 8px;
+    }
+
+    /* Sliders stacked neatly */
+    .sliders-row {
+      flex-direction: column;
+      gap: 10px;
+      padding: 10px 10px;
+    }
+    .slider { width: 100%; min-width: 0; }
+    .preset-select { width: 100%; justify-content: space-between; }
+    .preset-select select { flex: 1; max-width: 180px; }
+
+    /* 3D Stage on Mobile: adjusted height and camera */
+    .stage-wrapper { margin-top: 12px; border-radius: 12px; }
+    .stage { height: 300px; }
+
+    .cam-toolbar {
+      top: 6px;
+      right: 6px;
+      gap: 4px;
+    }
+    .cam-btn {
+      font-size: 10px;
+      padding: 4px 6px;
+      border-radius: 5px;
+    }
+    .cam-hint {
+      bottom: 6px;
+      left: 8px;
+      font-size: 10px;
+      opacity: 0.8;
+    }
+
+    .legend {
+      gap: 8px 12px;
+      font-size: 11px;
+      justify-content: center;
+      margin-top: 10px;
+    }
+
+    /* Educational Card Mobile */
+    .edu-container { margin-top: 16px; }
+    .edu-card { padding: 14px 12px; border-radius: 14px; }
+    .edu-header { padding-bottom: 12px; margin-bottom: 12px; gap: 8px; }
+    .edu-title-group h2 { font-size: 17px; }
+    .edu-title-group p { font-size: 12px; }
+    .badge-pills { gap: 6px; }
+    .pill { font-size: 11px; padding: 4px 8px; }
+    .edu-grid { grid-template-columns: 1fr; gap: 12px; }
+    .edu-block { padding: 12px; border-radius: 12px; }
+    .edu-block h3 { font-size: 13px; }
+    .edu-block p, .edu-steps { font-size: 12px; line-height: 1.55; }
+    .complex-table { font-size: 11.5px; }
+    .complex-table th, .complex-table td { padding: 6px 8px; }
+    .code-viewer { font-size: 11px; padding: 10px; }
+  }
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <div class="title-area">
-      <h1>
-        Real-Time 3D Sorting Visualizer
-        <span class="badge-3d">WebGL 3D</span>
-      </h1>
-      <p>정렬 알고리즘의 동작 과정을 진짜 3D 입체 공간에서 자유롭게 회전하며 실시간으로 학습하세요.</p>
+    <div class="header-top">
+      <div class="title-area">
+        <h1>
+          Real-Time 3D Sorting Visualizer
+          <span class="badge-3d">WebGL 3D</span>
+        </h1>
+      </div>
+      <div class="header-actions">
+        <button class="icon-btn" id="soundBtn" title="피치 사운드 켜기/끄기">
+          <span>🔇 소리 꺼짐</span>
+        </button>
+      </div>
     </div>
-    <div class="header-actions">
-      <button class="icon-btn" id="soundBtn" title="피치 사운드 켜기/끄기">
-        <span>🔇 소리 꺼짐</span>
-      </button>
-    </div>
+    <p class="sub-desc">정렬 알고리즘의 동작 과정을 진짜 3D 입체 공간에서 자유롭게 회전하며 실시간으로 학습하세요.</p>
   </header>
 
   <div class="grid">
@@ -437,8 +558,8 @@
 
         <div class="sliders-row">
           <div class="slider">
-            <label>배열 크기 <b id="sizeVal">35</b></label>
-            <input type="range" id="sizeRange" min="10" max="80" value="35">
+            <label>배열 크기 <b id="sizeVal">30</b></label>
+            <input type="range" id="sizeRange" min="10" max="70" value="30">
           </div>
           <div class="slider">
             <label>속도 <b id="speedVal">보통</b></label>
@@ -459,22 +580,22 @@
       <!-- 3D WebGL Stage Container -->
       <div class="stage-wrapper">
         <div class="cam-toolbar">
-          <button class="cam-btn" id="camQuarter" title="3D 기본 시점">🎥 3D 뷰</button>
+          <button class="cam-btn" id="camQuarter" title="3D 기본 시점">🎥 3D</button>
           <button class="cam-btn" id="camFront" title="정면 뷰">📐 정면</button>
           <button class="cam-btn" id="camTop" title="탑다운 뷰">🛸 탑뷰</button>
           <button class="cam-btn" id="camReset" title="시점 초기화">🔄 리셋</button>
         </div>
         <div class="cam-hint">
-          <span>🖱️ 마우스 드래그: 360° 자유 회전 | 휠: 줌 인/아웃</span>
+          <span>👆 드래그: 360° 회전 | 핀치: 줌</span>
         </div>
         <div class="stage" id="stage"></div>
       </div>
 
       <div class="legend">
-        <span><i class="dot c-default"></i> 미정렬 (Unsorted)</span>
-        <span><i class="dot c-compare"></i> 비교 중 (Comparing)</span>
-        <span><i class="dot c-swap"></i> 교환/이동 (Swapping)</span>
-        <span><i class="dot c-sorted"></i> 정렬 완료 (Sorted)</span>
+        <span><i class="dot c-default"></i> 미정렬</span>
+        <span><i class="dot c-compare"></i> 비교 중</span>
+        <span><i class="dot c-swap"></i> 교환/이동</span>
+        <span><i class="dot c-sorted"></i> 정렬 완료</span>
       </div>
     </div>
 
@@ -506,8 +627,8 @@
       <div class="stat-box full-col">
         <span class="k">핵심 복잡도 (Complexity)</span>
         <div style="display: flex; gap: 8px; width: 100%; justify-content: space-between; margin-top: 4px;">
-          <span style="font-size: 12.5px; color: var(--muted);">시간(평균): <b id="statTimeCmp" style="color: #93c5fd;">O(n²)</b></span>
-          <span style="font-size: 12.5px; color: var(--muted);">공간: <b id="statSpaceCmp" style="color: #d8b4fe;">O(1)</b></span>
+          <span style="font-size: 12px; color: var(--muted);">시간(평균): <b id="statTimeCmp" style="color: #93c5fd;">O(n²)</b></span>
+          <span style="font-size: 12px; color: var(--muted);">공간: <b id="statSpaceCmp" style="color: #d8b4fe;">O(1)</b></span>
         </div>
       </div>
     </div>
@@ -530,7 +651,7 @@
 
       <div class="edu-grid">
         <!-- Left: Principle & Metaphor -->
-        <div style="display: flex; flex-direction: column; gap: 14px;">
+        <div style="display: flex; flex-direction: column; gap: 12px;">
           <div class="edu-block">
             <h3>💡 직관적 비유 (Metaphor)</h3>
             <p id="eduAnalogy">탄산음료 속 기포가 수면 위로 뽀글뽀글 떠오르듯, 인접한 두 값을 비교해 큰 값을 뒤로 차례차례 밀어 올리는 방식입니다.</p>
@@ -553,7 +674,7 @@
         </div>
 
         <!-- Right: Pseudocode & Complexity Spec -->
-        <div style="display: flex; flex-direction: column; gap: 14px;">
+        <div style="display: flex; flex-direction: column; gap: 12px;">
           <div class="edu-block">
             <h3>💻 의사코드 (Pseudocode)</h3>
             <div class="code-viewer" id="eduCode"></div>
@@ -800,10 +921,10 @@
   // ==========================================
   let scene, camera, renderer, controls;
   let barMeshes = [];
-  const TOTAL_SPAN = 64; // total X width of bars
-  const MAX_BAR_HEIGHT = 22;
+  const TOTAL_SPAN = 60; // total X width of bars in 3D
+  const MAX_BAR_HEIGHT = 20;
 
-  // Pre-created 3D Materials with specular highlights & emissive neon glow
+  // Pre-created 3D Materials
   const matDefault = new THREE.MeshStandardMaterial({
     color: 0x3b82f6,
     metalness: 0.35,
@@ -816,7 +937,7 @@
     metalness: 0.2,
     roughness: 0.15,
     emissive: 0xffb703,
-    emissiveIntensity: 0.8
+    emissiveIntensity: 0.85
   });
   const matSwap = new THREE.MeshStandardMaterial({
     color: 0xff477e,
@@ -830,54 +951,66 @@
     metalness: 0.25,
     roughness: 0.2,
     emissive: 0x059669,
-    emissiveIntensity: 0.7
+    emissiveIntensity: 0.75
   });
 
+  // Calculate required camera distance so the 3D bars fit comfortably on any screen (Desktop or Mobile)
+  function getCameraDistRatio() {
+    const w = stageEl.clientWidth || 360;
+    const h = stageEl.clientHeight || 300;
+    const aspect = w / h;
+    const fovRad = THREE.MathUtils.degToRad(camera.fov / 2);
+    // Horizontal angle
+    const tanHalfH = Math.tan(fovRad) * aspect;
+    // We want a safe visible width of 75 units (TOTAL_SPAN + margin)
+    const requiredDist = 38 / Math.max(tanHalfH, 0.25);
+    const baseDist = 58;
+    return Math.max(1.0, requiredDist / baseDist);
+  }
+
   function initThree() {
-    const width = stageEl.clientWidth || 800;
-    const height = stageEl.clientHeight || 440;
+    const width = stageEl.clientWidth || 360;
+    const height = stageEl.clientHeight || 300;
 
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0x060911);
-    scene.fog = new THREE.FogExp2(0x060911, 0.008);
+    scene.fog = new THREE.FogExp2(0x060911, 0.007);
 
-    camera = new THREE.PerspectiveCamera(42, width / height, 0.1, 1000);
-    setCameraQuarter();
+    camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 1000);
 
     renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     stageEl.appendChild(renderer.domElement);
 
     controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
-    controls.dampingFactor = 0.06;
+    controls.dampingFactor = 0.08;
     controls.maxPolarAngle = Math.PI / 2 - 0.04; // Do not go below floor
     controls.minDistance = 25;
-    controls.maxDistance = 140;
+    controls.maxDistance = 180;
+    controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN };
 
-    // Ambient light
-    const ambLight = new THREE.AmbientLight(0xffffff, 0.65);
+    setCameraQuarter();
+
+    // Lighting
+    const ambLight = new THREE.AmbientLight(0xffffff, 0.7);
     scene.add(ambLight);
 
-    // Main directional light (top-front-right)
     const dirLight = new THREE.DirectionalLight(0xbfdbfe, 0.85);
     dirLight.position.set(25, 45, 35);
     scene.add(dirLight);
 
-    // Secondary rim/accent light (back-left)
     const rimLight = new THREE.DirectionalLight(0xa855f7, 0.55);
     rimLight.position.set(-35, 30, -25);
     scene.add(rimLight);
 
-    // Cyberpunk Neon Floor Grid
+    // Floor Grid
     const grid = new THREE.GridHelper(90, 36, 0x4f8cff, 0x162238);
     grid.position.y = -0.05;
     scene.add(grid);
 
-    // Floor subtle plane
     const planeGeo = new THREE.PlaneGeometry(140, 140);
     const planeMat = new THREE.MeshBasicMaterial({ color: 0x05080e, depthWrite: false });
     const floor = new THREE.Mesh(planeGeo, planeMat);
@@ -885,7 +1018,6 @@
     floor.position.y = -0.08;
     scene.add(floor);
 
-    // Handle Window Resize
     window.addEventListener("resize", onWindowResize);
     animate();
   }
@@ -897,22 +1029,26 @@
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
     renderer.setSize(w, h);
+    setCameraQuarter();
   }
 
   function setCameraQuarter() {
-    camera.position.set(0, 32, 58);
-    camera.lookAt(0, 8, 0);
-    if (controls) controls.target.set(0, 8, 0);
+    const ratio = getCameraDistRatio();
+    camera.position.set(0, 30 * ratio, 56 * ratio);
+    camera.lookAt(0, 7, 0);
+    if (controls) controls.target.set(0, 7, 0);
   }
 
   function setCameraFront() {
-    camera.position.set(0, 14, 62);
-    camera.lookAt(0, 10, 0);
-    if (controls) controls.target.set(0, 10, 0);
+    const ratio = getCameraDistRatio();
+    camera.position.set(0, 12 * ratio, 60 * ratio);
+    camera.lookAt(0, 9, 0);
+    if (controls) controls.target.set(0, 9, 0);
   }
 
   function setCameraTop() {
-    camera.position.set(0, 68, 6);
+    const ratio = getCameraDistRatio();
+    camera.position.set(0, 70 * ratio, 6 * ratio);
     camera.lookAt(0, 0, 0);
     if (controls) controls.target.set(0, 0, 0);
   }
@@ -969,7 +1105,7 @@
   // Algorithm Buttons Setup
   ALGOS.forEach(name => {
     const b = document.createElement("button");
-    b.textContent = ALGO_DATA[name].en;
+    b.textContent = name; // Clean and compact for mobile & desktop
     b.dataset.algo = name;
     if (name === current) b.classList.add("active");
     b.addEventListener("click", () => {
@@ -1075,15 +1211,14 @@
   }
 
   function rebuild3DBars() {
-    // Remove old meshes
     barMeshes.forEach(m => scene.remove(m));
     barMeshes = [];
 
     const n = arr.length;
     const maxVal = Math.max(...arr, 1);
     const spacing = TOTAL_SPAN / n;
-    const barWidth = Math.max(spacing * 0.72, 0.4);
-    const barDepth = Math.max(spacing * 0.85, 0.8);
+    const barWidth = Math.max(spacing * 0.72, 0.35);
+    const barDepth = Math.max(spacing * 0.85, 0.7);
     const startX = - (TOTAL_SPAN - spacing) / 2;
 
     const unitGeo = new THREE.BoxGeometry(barWidth, 1, barDepth);
@@ -1091,7 +1226,7 @@
     for (let i = 0; i < n; i++) {
       const mesh = new THREE.Mesh(unitGeo, matDefault);
       const h = (arr[i] / maxVal) * MAX_BAR_HEIGHT;
-      mesh.scale.set(1, Math.max(h, 0.5), 1);
+      mesh.scale.set(1, Math.max(h, 0.4), 1);
       const x = startX + i * spacing;
       mesh.position.set(x, h / 2, 0);
       scene.add(mesh);
@@ -1110,7 +1245,7 @@
       if (!mesh) continue;
 
       const h = (arr[i] / maxVal) * MAX_BAR_HEIGHT;
-      mesh.scale.set(1, Math.max(h, 0.5), 1);
+      mesh.scale.set(1, Math.max(h, 0.4), 1);
       const x = startX + i * spacing;
 
       let elevation = 0;
@@ -1121,12 +1256,12 @@
       }
       if (hl.compare && hl.compare.has(i)) {
         mat = matCompare;
-        elevation = 2.2; // True 3D lift
+        elevation = 2.0;
         playNote(arr[i], maxVal);
       }
       if (hl.swap && hl.swap.has(i)) {
         mat = matSwap;
-        elevation = 3.5; // True 3D higher lift
+        elevation = 3.2;
         playNote(arr[i], maxVal);
       }
 
@@ -1475,6 +1610,12 @@
       yield { line: 4, hl: { sorted: sortedSet, compare: null, swap: new Set([i, largest]) } };
       i = largest;
     }
+  }
+
+  // Initial Responsive adjustment
+  if (window.innerWidth <= 680) {
+    sizeRange.value = 25;
+    sizeVal.textContent = 25;
   }
 
   // Initial Boot
