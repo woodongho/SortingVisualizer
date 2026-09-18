@@ -1,183 +1,798 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sorting Visualizer</title>
+<title>Real-Time 3D Sorting Visualizer | 인터랙티브 정렬 알고리즘 시각화</title>
 <style>
   :root {
-    --bg: #0b0e14;
-    --panel: #141a26;
-    --panel-2: #1b2333;
+    --bg: #090c13;
+    --panel: #121824;
+    --panel-2: #182132;
+    --card-border: #222e44;
     --accent: #4f8cff;
-    --accent-2: #7c4dff;
-    --text: #e6ecff;
-    --muted: #8b97ad;
-    --bar: #3a4a6b;
-    --compare: #ffd166;
-    --swap: #ff5d73;
+    --accent-2: #8b5cf6;
+    --accent-glow: rgba(79, 140, 255, 0.45);
+    --text: #eaf0ff;
+    --muted: #8694af;
+    --bar-base: #3b82f6;
+    --compare: #ffca3a;
+    --compare-glow: rgba(255, 202, 58, 0.55);
+    --swap: #ff477e;
+    --swap-glow: rgba(255, 71, 126, 0.65);
     --sorted: #06d6a0;
+    --sorted-glow: rgba(6, 214, 160, 0.6);
   }
   * { box-sizing: border-box; }
   html, body {
     margin: 0;
     min-height: 100%;
-    font-family: "Segoe UI", system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
-    background: radial-gradient(1200px 700px at 20% -10%, #16203a 0%, var(--bg) 55%);
+    font-family: "Pretendard", "Segoe UI", system-ui, -apple-system, sans-serif;
+    background: radial-gradient(1300px 750px at 15% -5%, #182647 0%, var(--bg) 60%);
     color: var(--text);
   }
-  .wrap { max-width: 1180px; margin: 0 auto; padding: 28px 20px 60px; }
-  header h1 {
-    margin: 0 0 4px;
-    font-size: 26px;
-    letter-spacing: 0.3px;
-    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  .wrap { max-width: 1240px; margin: 0 auto; padding: 24px 18px 70px; }
+
+  /* Header */
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 22px;
+  }
+  .title-area h1 {
+    margin: 0 0 6px;
+    font-size: 28px;
+    letter-spacing: -0.5px;
+    background: linear-gradient(90deg, #60a5fa, #c084fc, #38bdf8);
     -webkit-background-clip: text; background-clip: text; color: transparent;
+    display: flex;
+    align-items: center;
+    gap: 10px;
   }
-  header p { margin: 0 0 22px; color: var(--muted); font-size: 14px; }
-  .grid { display: grid; grid-template-columns: 1fr 280px; gap: 18px; }
-  @media (max-width: 900px){ .grid { grid-template-columns: 1fr; } }
-
-  .card {
-    background: linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%);
-    border: 1px solid #232c40;
-    border-radius: 16px;
-    padding: 18px;
-    box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+  .title-area h1 .badge-3d {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 6px;
+    background: linear-gradient(135deg, rgba(79, 140, 255, 0.3), rgba(139, 92, 246, 0.3));
+    border: 1px solid var(--accent);
+    color: #fff;
+    letter-spacing: 0.5px;
+    font-weight: 700;
   }
+  .title-area p { margin: 0; color: var(--muted); font-size: 14.5px; line-height: 1.5; }
+  .header-badges { display: flex; gap: 8px; align-items: center; }
 
-  .controls { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
-  .algo-group { display: flex; flex-wrap: wrap; gap: 8px; }
-  button, .seg button {
-    cursor: pointer;
-    border: 1px solid #2a3349;
-    background: #1a2233;
+  /* Tool Toggles */
+  .icon-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #192233;
+    border: 1px solid #27344d;
     color: var(--text);
-    padding: 9px 14px;
+    padding: 8px 14px;
     border-radius: 10px;
     font-size: 13px;
     font-weight: 600;
-    transition: transform .08s ease, background .2s ease, border-color .2s ease, box-shadow .2s ease;
+    cursor: pointer;
+    transition: all 0.2s ease;
   }
-  button:hover { border-color: var(--accent); }
+  .icon-btn:hover { border-color: var(--accent); background: #202c42; }
+  .icon-btn.active {
+    background: linear-gradient(135deg, rgba(79,140,255,0.25), rgba(139,92,246,0.25));
+    border-color: var(--accent);
+    box-shadow: 0 0 12px var(--accent-glow);
+    color: #fff;
+  }
+
+  /* Grid Layout */
+  .grid { display: grid; grid-template-columns: 1fr 310px; gap: 20px; }
+  @media (max-width: 992px){ .grid { grid-template-columns: 1fr; } }
+
+  .card {
+    background: linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%);
+    border: 1px solid var(--card-border);
+    border-radius: 18px;
+    padding: 20px;
+    box-shadow: 0 14px 36px rgba(0,0,0,0.42);
+  }
+
+  /* Controls */
+  .controls-bar { display: flex; flex-direction: column; gap: 14px; }
+  .controls-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+  .algo-group { display: flex; flex-wrap: wrap; gap: 7px; }
+  
+  button {
+    cursor: pointer;
+    border: 1px solid #28364e;
+    background: #172030;
+    color: var(--text);
+    padding: 8px 13px;
+    border-radius: 9px;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all .15s ease;
+  }
+  button:hover { border-color: var(--accent); background: #1e2a40; }
   button:active { transform: translateY(1px); }
-  .seg button { background: transparent; }
-  .seg button.active {
-    background: linear-gradient(180deg, #22305a, #1a2540);
+
+  .algo-group button { background: #131b2a; }
+  .algo-group button.active {
+    background: linear-gradient(135deg, #2b457e, #24355c);
     border-color: var(--accent);
     color: #fff;
-    box-shadow: 0 0 0 1px var(--accent) inset;
+    box-shadow: 0 0 14px rgba(79,140,255,0.35);
   }
-  .btn-primary {
-    background: linear-gradient(90deg, var(--accent), var(--accent-2));
-    border: none;
-    padding: 10px 20px;
-  }
-  .btn-primary.paused { background: linear-gradient(90deg, #ff8a5c, #ff5d73); }
-  .btn-ghost { background: #121826; }
 
-  .slider { display: flex; flex-direction: column; gap: 6px; min-width: 180px; }
+  .action-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn-primary {
+    background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+    border: none;
+    padding: 9px 18px;
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(59,130,246,0.38);
+  }
+  .btn-primary:hover { filter: brightness(1.12); }
+  .btn-primary.paused {
+    background: linear-gradient(90deg, #f59e0b, #ef4444);
+    box-shadow: 0 4px 14px rgba(239,68,68,0.38);
+  }
+  .btn-step { background: #1e293b; border-color: #384865; }
+  .btn-step:hover { border-color: var(--compare); }
+  .btn-ghost { background: #131b2a; }
+
+  .sliders-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: center;
+    background: rgba(10, 14, 22, 0.4);
+    border: 1px solid rgba(255,255,255,0.05);
+    padding: 10px 14px;
+    border-radius: 12px;
+  }
+  .slider { display: flex; flex-direction: column; gap: 4px; min-width: 140px; flex: 1; }
   .slider label { font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; }
   .slider label b { color: var(--text); }
-  input[type=range] { -webkit-appearance: none; width: 100%; height: 6px; border-radius: 6px; background: #23304a; outline: none; }
+  input[type=range] { -webkit-appearance: none; width: 100%; height: 6px; border-radius: 6px; background: #222f46; outline: none; }
   input[type=range]::-webkit-slider-thumb {
     -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%;
-    background: var(--accent); cursor: pointer; box-shadow: 0 0 0 4px rgba(79,140,255,.18);
+    background: var(--accent); cursor: pointer; box-shadow: 0 0 8px var(--accent);
   }
   input[type=range]::-moz-range-thumb {
     width: 16px; height: 16px; border: 0; border-radius: 50%; background: var(--accent); cursor: pointer;
   }
 
+  .preset-select {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .preset-select select {
+    background: #162030;
+    color: var(--text);
+    border: 1px solid #293852;
+    padding: 5px 9px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    outline: none;
+    cursor: pointer;
+  }
+
+  /* 3D Visualizer Stage */
   .stage {
     margin-top: 18px;
-    background: #0a0e17;
-    border: 1px solid #1c2436;
-    border-radius: 14px;
-    padding: 16px 14px 10px;
-    height: 460px;
+    background: #080c14;
+    border: 1px solid #1c273c;
+    border-radius: 16px;
+    padding: 24px 20px 16px;
+    height: 440px;
     position: relative;
     overflow: hidden;
+    transition: all 0.4s ease;
   }
-  .bars { display: flex; align-items: flex-end; justify-content: center; height: 100%; gap: 2px; }
+  
+  /* 3D Floor Grid */
+  .stage-3d-active {
+    perspective: 900px;
+    perspective-origin: 50% 18%;
+  }
+  .stage-3d-active .stage-floor {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: -20%;
+    width: 140%;
+    height: 180px;
+    background-image: 
+      linear-gradient(rgba(79, 140, 255, 0.12) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(79, 140, 255, 0.12) 1px, transparent 1px);
+    background-size: 28px 28px;
+    transform: rotateX(68deg);
+    transform-origin: bottom center;
+    pointer-events: none;
+    opacity: 0.85;
+    mask-image: linear-gradient(to top, rgba(0,0,0,1) 30%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,1) 30%, transparent 100%);
+  }
+
+  .bars {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    height: 100%;
+    gap: 3px;
+    position: relative;
+    z-index: 2;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .stage-3d-active .bars {
+    transform-style: preserve-3d;
+    transform: rotateX(18deg) rotateY(-4deg) translateY(-14px);
+  }
+
+  /* 2D Bar Style */
+  .bar-col {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    position: relative;
+  }
   .bar {
     width: 100%;
-    background: linear-gradient(180deg, var(--accent), #25407a);
+    background: linear-gradient(180deg, #60a5fa 0%, #1e3a8a 100%);
     border-radius: 4px 4px 0 0;
-    transition: height .18s ease, background .18s ease;
-    min-height: 2px;
+    transition: height .16s ease, background .18s ease, transform .18s ease, box-shadow .18s ease;
+    min-height: 3px;
+    position: relative;
   }
-  .bar.compare { background: linear-gradient(180deg, var(--compare), #b8862b); }
-  .bar.swap { background: linear-gradient(180deg, var(--swap), #a5324a); }
-  .bar.sorted { background: linear-gradient(180deg, var(--sorted), #048a66); }
 
-  .legend { display: flex; gap: 16px; margin-top: 12px; flex-wrap: wrap; color: var(--muted); font-size: 12px; }
+  /* 3D Isometric Bar Pillars */
+  .stage-3d-active .bar {
+    border-radius: 2px 2px 0 0;
+    box-shadow: -3px 2px 6px rgba(0,0,0,0.6), 0 0 10px rgba(59, 130, 246, 0.2);
+    transform: translateZ(10px);
+  }
+  .stage-3d-active .bar::before {
+    /* 3D Top Cap */
+    content: "";
+    position: absolute;
+    top: -6px;
+    left: 0;
+    width: 100%;
+    height: 7px;
+    background: #93c5fd;
+    border-radius: 2px 2px 0 0;
+    transform: skewX(-32deg);
+    transform-origin: bottom left;
+    filter: brightness(1.25);
+    box-shadow: 0 -1px 4px rgba(255,255,255,0.4) inset;
+  }
+  .stage-3d-active .bar::after {
+    /* 3D Right Side Depth */
+    content: "";
+    position: absolute;
+    top: -6px;
+    right: -5px;
+    width: 5px;
+    height: 100%;
+    background: #1e3a8a;
+    transform: skewY(-58deg);
+    transform-origin: top left;
+    filter: brightness(0.65);
+    border-radius: 0 2px 0 0;
+  }
+
+  /* State Highlights in 2D and 3D */
+  .bar.compare {
+    background: linear-gradient(180deg, #ffd166 0%, #b45309 100%) !important;
+    box-shadow: 0 0 16px var(--compare-glow) !important;
+    transform: translateY(-8px) scaleY(1.02);
+    z-index: 10;
+  }
+  .stage-3d-active .bar.compare::before { background: #fef08a !important; }
+  .stage-3d-active .bar.compare::after { background: #92400e !important; }
+
+  .bar.swap {
+    background: linear-gradient(180deg, #ff4d6d 0%, #9f1239 100%) !important;
+    box-shadow: 0 0 22px var(--swap-glow) !important;
+    transform: translateY(-12px) scale(1.06);
+    z-index: 12;
+  }
+  .stage-3d-active .bar.swap::before { background: #fecdd3 !important; }
+  .stage-3d-active .bar.swap::after { background: #881337 !important; }
+
+  .bar.sorted {
+    background: linear-gradient(180deg, #34d399 0%, #065f46 100%) !important;
+    box-shadow: 0 0 12px var(--sorted-glow) !important;
+  }
+  .stage-3d-active .bar.sorted::before { background: #a7f3d0 !important; }
+  .stage-3d-active .bar.sorted::after { background: #064e3b !important; }
+
+  /* Legend */
+  .legend { display: flex; gap: 18px; margin-top: 14px; flex-wrap: wrap; color: var(--muted); font-size: 12.5px; align-items: center; }
   .legend span { display: inline-flex; align-items: center; gap: 6px; }
-  .dot { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
-  .dot.c-default { background: linear-gradient(180deg, var(--accent), #25407a); }
-  .dot.c-compare { background: linear-gradient(180deg, var(--compare), #b8862b); }
-  .dot.c-swap { background: linear-gradient(180deg, var(--swap), #a5324a); }
-  .dot.c-sorted { background: linear-gradient(180deg, var(--sorted), #048a66); }
+  .dot { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+  .dot.c-default { background: #3b82f6; box-shadow: 0 0 6px rgba(59,130,246,0.5); }
+  .dot.c-compare { background: #ffd166; box-shadow: 0 0 6px rgba(255,209,102,0.6); }
+  .dot.c-swap { background: #ff4d6d; box-shadow: 0 0 6px rgba(255,77,109,0.7); }
+  .dot.c-sorted { background: #34d399; box-shadow: 0 0 6px rgba(52,211,153,0.6); }
 
-  .stats { display: flex; flex-direction: column; gap: 12px; }
-  .stats h2 { margin: 0 0 6px; font-size: 15px; color: var(--text); }
-  .stat {
-    background: #10162a; border: 1px solid #1f2940; border-radius: 12px; padding: 12px 14px;
+  /* Right Stats Panel */
+  .stats-col { display: flex; flex-direction: column; gap: 14px; }
+  .stats-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
+  .stats-header h2 { margin: 0; font-size: 16px; color: var(--text); }
+  
+  .status-badge {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--muted);
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: rgba(255,255,255,0.04);
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.08);
   }
-  .stat .k { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; }
-  .stat .v { font-size: 24px; font-weight: 700; margin-top: 2px; }
-  .stat .v small { font-size: 13px; color: var(--muted); font-weight: 500; }
-  .status { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
-  .pulse { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); }
-  .pulse.running { background: var(--sorted); box-shadow: 0 0 10px var(--sorted); animation: blink 1s infinite; }
-  @keyframes blink { 50% { opacity: .35; } }
+  .pulse { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+  .pulse.running { background: #10b981; box-shadow: 0 0 10px #10b981; animation: blink 1s infinite; }
+  @keyframes blink { 50% { opacity: .3; } }
+
+  .stat-box {
+    background: #101624;
+    border: 1px solid #1c273c;
+    border-radius: 12px;
+    padding: 12px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .stat-box .k { font-size: 12px; color: var(--muted); font-weight: 500; }
+  .stat-box .v { font-size: 20px; font-weight: 700; color: #fff; }
+  .stat-box .v small { font-size: 12px; color: var(--muted); }
+
+  /* Educational Section */
+  .edu-container { margin-top: 24px; }
+  .edu-card {
+    background: linear-gradient(180deg, #111724 0%, #151d2e 100%);
+    border: 1px solid var(--card-border);
+    border-radius: 18px;
+    padding: 22px 24px;
+  }
+  .edu-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    border-bottom: 1px solid #1f2a3f;
+    padding-bottom: 16px;
+    margin-bottom: 18px;
+  }
+  .edu-title-group h2 { margin: 0 0 4px; font-size: 20px; color: #fff; }
+  .edu-title-group p { margin: 0; color: var(--muted); font-size: 13.5px; }
+
+  /* Complexity Badges */
+  .badge-pills { display: flex; gap: 8px; flex-wrap: wrap; }
+  .pill {
+    padding: 5px 11px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .pill-time { background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.35); color: #93c5fd; }
+  .pill-space { background: rgba(168, 85, 247, 0.15); border: 1px solid rgba(168, 85, 247, 0.35); color: #d8b4fe; }
+  .pill-stable { background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.35); color: #6ee7b7; }
+  .pill-unstable { background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.35); color: #fca5a5; }
+
+  /* Educational Tabs & Grid */
+  .edu-grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 20px; }
+  @media (max-width: 900px){ .edu-grid { grid-template-columns: 1fr; } }
+
+  .edu-block {
+    background: #0d121c;
+    border: 1px solid #1a2436;
+    border-radius: 14px;
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .edu-block h3 {
+    margin: 0;
+    font-size: 14px;
+    color: #93c5fd;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    letter-spacing: -0.2px;
+  }
+  .edu-block p { margin: 0; font-size: 13.5px; line-height: 1.6; color: #cbd5e1; }
+  .edu-steps { margin: 0; padding-left: 20px; font-size: 13px; line-height: 1.7; color: #cbd5e1; }
+  .edu-steps li { margin-bottom: 4px; }
+
+  /* Pseudocode Viewer */
+  .code-viewer {
+    background: #080c14;
+    border: 1px solid #192337;
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-family: "JetBrains Mono", "Fira Code", monospace;
+    font-size: 12.5px;
+    color: #e2e8f0;
+    line-height: 1.6;
+    overflow-x: auto;
+  }
+  .code-line { padding: 2px 6px; border-radius: 4px; transition: background 0.15s ease; }
+  .code-line.active {
+    background: rgba(255, 202, 58, 0.22);
+    border-left: 3px solid var(--compare);
+    color: #fff;
+    font-weight: 600;
+  }
+
+  /* Complexity Table */
+  .complex-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+    margin-top: 4px;
+  }
+  .complex-table th, .complex-table td {
+    padding: 8px 10px;
+    text-align: left;
+    border-bottom: 1px solid #1a2538;
+  }
+  .complex-table th { color: var(--muted); font-weight: 600; }
+  .complex-table td { color: #f1f5f9; font-family: monospace; font-size: 13px; }
+
+  /* Footer */
+  footer {
+    margin-top: 40px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    padding-top: 24px;
+  }
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <h1>Real-Time Sorting Visualizer</h1>
-    <p>Watch sorting algorithms work step-by-step. Adjust size and speed, then press Start.</p>
+    <div class="title-area">
+      <h1>
+        Real-Time Sorting Visualizer
+        <span class="badge-3d" id="modeBadge">3D MODE</span>
+      </h1>
+      <p>정렬 알고리즘의 작동 원리를 입체 3D 애니메이션과 실시간 복잡도 분석으로 직관적으로 학습하세요.</p>
+    </div>
+    <div class="header-badges">
+      <button class="icon-btn active" id="toggle3dBtn" title="3D 입체 효과 켜기/끄기">
+        <span>✨ 3D 효과</span>
+      </button>
+      <button class="icon-btn" id="soundBtn" title="피치 사운드 켜기/끄기">
+        <span>🔇 소리 꺼짐</span>
+      </button>
+    </div>
   </header>
 
   <div class="grid">
     <div class="card">
-      <div class="controls">
-        <div class="seg algo-group" id="algoGroup"></div>
-        <button class="btn-primary" id="startBtn">Start</button>
-        <button class="btn-ghost" id="resetBtn">Shuffle &amp; Reset</button>
-        <div class="slider">
-          <label>Array size <b id="sizeVal">50</b></label>
-          <input type="range" id="sizeRange" min="10" max="200" value="50">
+      <div class="controls-bar">
+        <div class="controls-row">
+          <div class="algo-group" id="algoGroup"></div>
+          <div class="action-btns">
+            <button class="btn-primary" id="startBtn">정렬 시작</button>
+            <button class="btn-step" id="stepBtn" title="1단계만 실행">한 단계 ▶|</button>
+            <button class="btn-ghost" id="resetBtn">섞기 &amp; 리셋</button>
+          </div>
         </div>
-        <div class="slider">
-          <label>Speed <b id="speedVal">Normal</b></label>
-          <input type="range" id="speedRange" min="0" max="100" value="45">
+
+        <div class="sliders-row">
+          <div class="slider">
+            <label>배열 크기 <b id="sizeVal">40</b></label>
+            <input type="range" id="sizeRange" min="10" max="100" value="40">
+          </div>
+          <div class="slider">
+            <label>속도 <b id="speedVal">보통</b></label>
+            <input type="range" id="speedRange" min="0" max="100" value="50">
+          </div>
+          <div class="preset-select">
+            <span>배열 형태:</span>
+            <select id="presetSelect">
+              <option value="random">🎲 무작위 (Random)</option>
+              <option value="nearly">📈 거의 정렬됨 (Nearly Sorted)</option>
+              <option value="reversed">📉 역순 정렬 (Reversed)</option>
+              <option value="few_unique">🔀 중복 다수 (Few Unique)</option>
+            </select>
+          </div>
         </div>
       </div>
 
-      <div class="stage"><div class="bars" id="bars"></div></div>
+      <div class="stage stage-3d-active" id="stage">
+        <div class="stage-floor"></div>
+        <div class="bars" id="bars"></div>
+      </div>
 
       <div class="legend">
-        <span><i class="dot c-default"></i> Unsorted</span>
-        <span><i class="dot c-compare"></i> Comparing</span>
-        <span><i class="dot c-swap"></i> Swapping</span>
-        <span><i class="dot c-sorted"></i> Sorted</span>
+        <span><i class="dot c-default"></i> 미정렬 (Unsorted)</span>
+        <span><i class="dot c-compare"></i> 비교 중 (Comparing)</span>
+        <span><i class="dot c-swap"></i> 교환/이동 (Swapping)</span>
+        <span><i class="dot c-sorted"></i> 정렬 완료 (Sorted)</span>
       </div>
     </div>
 
-    <div class="card stats">
-      <h2>Live Stats</h2>
-      <div class="status"><span class="pulse" id="pulse"></span><span id="statusText">Ready</span></div>
-      <div class="stat"><div class="k">Algorithm</div><div class="v" id="statAlgo">—</div></div>
-      <div class="stat"><div class="k">Comparisons</div><div class="v" id="statCmp">0</div></div>
-      <div class="stat"><div class="k">Swaps</div><div class="v" id="statSwap">0</div></div>
-      <div class="stat"><div class="k">Time Elapsed</div><div class="v" id="statTime">0.0 <small>s</small></div></div>
+    <!-- Stats Card -->
+    <div class="card stats-col">
+      <div class="stats-header">
+        <h2>실시간 상태 (Live Stats)</h2>
+        <div class="status-badge"><span class="pulse" id="pulse"></span><span id="statusText">대기 중</span></div>
+      </div>
+      
+      <div class="stat-box">
+        <span class="k">선택된 알고리즘</span>
+        <span class="v" id="statAlgo" style="font-size: 16px; color: #60a5fa;">Bubble Sort</span>
+      </div>
+      <div class="stat-box">
+        <span class="k">비교 횟수 (Comparisons)</span>
+        <span class="v" id="statCmp">0</span>
+      </div>
+      <div class="stat-box">
+        <span class="k">교환 횟수 (Swaps)</span>
+        <span class="v" id="statSwap">0</span>
+      </div>
+      <div class="stat-box">
+        <span class="k">소요 시간 (Elapsed)</span>
+        <span class="v" id="statTime">0.0 <small>s</small></span>
+      </div>
+
+      <!-- Quick Complexity Preview inside Stats -->
+      <div class="stat-box" style="flex-direction: column; align-items: flex-start; gap: 8px;">
+        <span class="k">핵심 복잡도 (Complexity)</span>
+        <div style="display: flex; gap: 6px; width: 100%; justify-content: space-between;">
+          <span style="font-size: 12px; color: var(--muted);">시간(평균): <b id="statTimeCmp" style="color: #93c5fd;">O(n²)</b></span>
+          <span style="font-size: 12px; color: var(--muted);">공간: <b id="statSpaceCmp" style="color: #d8b4fe;">O(1)</b></span>
+        </div>
+      </div>
     </div>
   </div>
+
+  <!-- Educational Guide Section -->
+  <div class="edu-container">
+    <div class="edu-card">
+      <div class="edu-header">
+        <div class="edu-title-group">
+          <h2 id="eduAlgoName">거품 정렬 (Bubble Sort)</h2>
+          <p id="eduAlgoSub">인접한 두 원소를 비교하며 큰 값을 뒤로 띄워 올리는 가장 기초적인 정렬</p>
+        </div>
+        <div class="badge-pills" id="eduBadges">
+          <span class="pill pill-time" id="badgeTime">시간: O(n²)</span>
+          <span class="pill pill-space" id="badgeSpace">공간: O(1)</span>
+          <span class="pill pill-stable" id="badgeStable">안정 정렬 (Stable)</span>
+        </div>
+      </div>
+
+      <div class="edu-grid">
+        <!-- Left: Principle & Metaphor -->
+        <div style="display: flex; flex-direction: column; gap: 14px;">
+          <div class="edu-block">
+            <h3>💡 직관적 비유 (Metaphor)</h3>
+            <p id="eduAnalogy">탄산음료 속 기포가 수면 위로 뽀글뽀글 떠오르듯, 인접한 두 값을 비교해 큰 값을 뒤로 차례차례 밀어 올리는 방식입니다.</p>
+          </div>
+
+          <div class="edu-block">
+            <h3>⚙️ 동작 원리 (How it Works)</h3>
+            <ol class="edu-steps" id="eduSteps">
+              <li>배열의 처음부터 인접한 두 원소를 순서대로 비교합니다.</li>
+              <li>앞의 원소가 뒤의 원소보다 크다면 두 원소의 위치를 교환(Swap)합니다.</li>
+              <li>1회전(Pass)이 끝나면 가장 큰 원소가 맨 끝에 고정되며, 확정된 범위를 제외하고 반복합니다.</li>
+            </ol>
+          </div>
+
+          <div class="edu-block">
+            <h3>⚖️ 장단점 및 실무 평가</h3>
+            <p><b style="color: #34d399;">장점:</b> <span id="eduPros">구현이 가장 단순하며 추가 메모리가 필요 없습니다.</span></p>
+            <p style="margin-top: 4px;"><b style="color: #ff6b81;">단점:</b> <span id="eduCons">데이터 이동이 지나치게 많아 실제 데이터 정렬 시 성능이 현저히 떨어집니다.</span></p>
+          </div>
+        </div>
+
+        <!-- Right: Pseudocode & Complexity Spec -->
+        <div style="display: flex; flex-direction: column; gap: 14px;">
+          <div class="edu-block">
+            <h3>💻 의사코드 (Pseudocode)</h3>
+            <div class="code-viewer" id="eduCode"></div>
+          </div>
+
+          <div class="edu-block">
+            <h3>📊 복잡도 분석표 (Complexity Analysis)</h3>
+            <table class="complex-table">
+              <tr><th>최선 시간 복잡도 (Best)</th><td id="tdBest">O(n)</td></tr>
+              <tr><th>평균 시간 복잡도 (Average)</th><td id="tdAvg">O(n²)</td></tr>
+              <tr><th>최악 시간 복잡도 (Worst)</th><td id="tdWorst">O(n²)</td></tr>
+              <tr><th>공간 복잡도 (Space)</th><td id="tdSpace">O(1)</td></tr>
+              <tr><th>안정성 여부 (Stability)</th><td id="tdStable">Stable (안정)</td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>Interactive Real-Time Sorting Algorithm Visualizer | 교육용 3D 알고리즘 시각화 도구</p>
+  </footer>
 </div>
 
 <script>
 (function () {
+  // ---- Comprehensive Educational Database ----
+  const ALGO_DATA = {
+    Bubble: {
+      name: "거품 정렬",
+      en: "Bubble Sort",
+      sub: "인접한 두 원소를 비교하며 큰 값을 수면 위로 띄워 올리는 정렬",
+      analogy: "탄산음료 속 기포가 수면 위로 뽀글뽀글 떠오르듯, 인접한 두 값을 비교해 큰 값을 뒤로 차례차례 밀어 올리는 가장 직관적인 방식입니다.",
+      steps: [
+        "배열의 처음부터 인접한 두 원소(arr[j], arr[j+1])를 비교합니다.",
+        "앞의 원소가 뒤의 원소보다 크다면 두 원소의 위치를 맞바꿉니다(Swap).",
+        "1회전이 끝나면 가장 큰 원소가 맨 끝에 확정되며, 확정된 범위를 줄여가며 반복합니다."
+      ],
+      pros: "코드가 매우 단순하고 직관적이며 제자리(In-place) 안정 정렬(Stable)입니다.",
+      cons: "교환(Swap) 연산이 너무 빈번하게 일어나 실제 실행 속도가 가장 느린 편입니다.",
+      timeBest: "O(n)",
+      timeAvg: "O(n²)",
+      timeWorst: "O(n²)",
+      space: "O(1)",
+      stable: true,
+      codeLines: [
+        "for i = 0 to n - 1:",
+        "  for j = 0 to n - i - 1:",
+        "    if arr[j] > arr[j + 1]:",
+        "      swap(arr[j], arr[j + 1])"
+      ]
+    },
+    Insertion: {
+      name: "삽입 정렬",
+      en: "Insertion Sort",
+      sub: "정렬된 영역을 탐색하여 새 카드를 제자리에 끼워 넣는 정렬",
+      analogy: "손에 쥔 카드를 크기 순서대로 정렬할 때, 새로운 카드를 이미 정렬된 카드들 사이에 알맞은 위치를 찾아 쏙 끼워 넣는 것과 같습니다.",
+      steps: [
+        "두 번째 원소부터 시작하여 삽입할 기준 원소(key)로 선택합니다.",
+        "앞쪽의 이미 정렬된 영역을 역방향으로 훑으며 key보다 큰 원소들을 한 칸씩 뒤로 밉니다.",
+        "key보다 작은 원소를 만나는 지점 바로 뒤에 key를 삽입합니다."
+      ],
+      pros: "배열이 거의 정렬되어 있을 경우 O(n)으로 초고속 작동하며 실무 복합 정렬(Timsort)에 쓰입니다.",
+      cons: "데이터가 역순이거나 무작위일 경우 O(n²)의 비교와 이동이 발생합니다.",
+      timeBest: "O(n)",
+      timeAvg: "O(n²)",
+      timeWorst: "O(n²)",
+      space: "O(1)",
+      stable: true,
+      codeLines: [
+        "for i = 1 to n - 1:",
+        "  key = arr[i], j = i - 1",
+        "  while j >= 0 and arr[j] > key:",
+        "    arr[j + 1] = arr[j]; j--",
+        "  arr[j + 1] = key"
+      ]
+    },
+    Selection: {
+      name: "선택 정렬",
+      en: "Selection Sort",
+      sub: "매 회전마다 남은 원소 중 최솟값을 찾아 맨 앞과 교환하는 정렬",
+      analogy: "바구니에서 가장 작은 사과를 골라 1등 자리에 놓고, 남은 사과 중 또 가장 작은 것을 골라 2등에 놓는 순진한 탐색 방식입니다.",
+      steps: [
+        "정렬되지 않은 나머지 전체 범위에서 최솟값(Minimum)의 위치를 탐색합니다.",
+        "찾은 최솟값을 정렬되지 않은 첫 번째 원소와 맞바꿉니다(Swap).",
+        "정렬 기준점을 한 칸 오른쪽으로 옮기며 배열 끝까지 반복합니다."
+      ],
+      pros: "데이터 상태와 무관하게 교환(Swap) 횟수가 최대 N-1회로 극히 적습니다.",
+      cons: "항상 끝까지 비교해야 하므로 최선/평균/최악 모두 O(n²)이며 불안정 정렬입니다.",
+      timeBest: "O(n²)",
+      timeAvg: "O(n²)",
+      timeWorst: "O(n²)",
+      space: "O(1)",
+      stable: false,
+      codeLines: [
+        "for i = 0 to n - 1:",
+        "  min_idx = i",
+        "  for j = i + 1 to n:",
+        "    if arr[j] < arr[min_idx]: min_idx = j",
+        "  swap(arr[i], arr[min_idx])"
+      ]
+    },
+    Merge: {
+      name: "병합 정렬",
+      en: "Merge Sort",
+      sub: "반으로 잘게 쪼갠 뒤 두 묶음씩 크기순으로 합치는 분할 정복 정렬",
+      analogy: "많은 서류를 한 장이 될 때까지 반씩 나눈 뒤(분할), 두 묶음씩 크기순으로 깔끔하게 비교하며 하나로 합쳐 나가는(정복) 방식입니다.",
+      steps: [
+        "분할(Divide): 배열의 크기가 1이 될 때까지 정확히 절반씩 계속 나눕니다.",
+        "정복(Conquer): 잘게 쪼개진 두 하위 배열의 앞 원소들을 비교하며 크기순으로 임시 배열에 병합합니다.",
+        "복사(Copy): 정렬된 임시 배열의 내용을 원본 배열에 그대로 반영합니다."
+      ],
+      pros: "어떤 최악의 데이터에서도 일관되게 O(n log n)을 보장하며 안정 정렬입니다.",
+      cons: "병합 과정에서 원본 크기만큼의 추가 메모리 공간(O(n))이 반드시 필요합니다.",
+      timeBest: "O(n log n)",
+      timeAvg: "O(n log n)",
+      timeWorst: "O(n log n)",
+      space: "O(n)",
+      stable: true,
+      codeLines: [
+        "mergeSort(arr, l, r):",
+        "  if l < r:",
+        "    mid = (l + r) / 2",
+        "    mergeSort(arr, l, mid)",
+        "    mergeSort(arr, mid + 1, r)",
+        "    merge(arr, l, mid, r)"
+      ]
+    },
+    Quick: {
+      name: "퀵 정렬",
+      en: "Quick Sort",
+      sub: "피벗(기준점)을 정해 작은 쪽과 큰 쪽으로 가르는 고속 분할 정렬",
+      analogy: "기준 반장(Pivot)을 하나 세우고 '나보다 작은 사람은 왼쪽, 큰 사람은 오른쪽으로 모여!'라고 교통정리한 뒤 양쪽을 반복 정렬합니다.",
+      steps: [
+        "기준 원소(Pivot)를 하나 선택합니다 (보통 맨 끝 또는 중앙).",
+        "피벗보다 작은 값은 왼쪽, 큰 값은 오른쪽으로 재배치(Partition)합니다.",
+        "피벗을 기준으로 나뉜 좌/우 두 부분 배열에 대해 재귀적으로 퀵 정렬을 수행합니다."
+      ],
+      pros: "하드웨어 캐시 친화적이며 대부분의 실무 데이터에서 평균 속도가 가장 빠릅니다.",
+      cons: "피벗이 계속 편향되게 선택되는 최악의 경우(이미 정렬된 경우 등) O(n²)으로 느려집니다.",
+      timeBest: "O(n log n)",
+      timeAvg: "O(n log n)",
+      timeWorst: "O(n²)",
+      space: "O(log n)",
+      stable: false,
+      codeLines: [
+        "quickSort(arr, l, r):",
+        "  if l < r:",
+        "    pi = partition(arr, l, r)",
+        "    quickSort(arr, l, pi - 1)",
+        "    quickSort(arr, pi + 1, r)"
+      ]
+    },
+    Heap: {
+      name: "힙 정렬",
+      en: "Heap Sort",
+      sub: "최대 힙(완전 이진 트리)을 구성하여 최댓값을 하나씩 뽑아내는 정렬",
+      analogy: "토너먼트 대진표(최대 힙)를 짜서 챔피언(최댓값)을 뽑아 맨 뒤로 보내고, 남은 선수들로 다시 대진표를 복원하는 과정의 반복입니다.",
+      steps: [
+        "배열을 부모 노드가 항상 자식보다 큰 '최대 힙(Max Heap)' 구조로 빌드합니다.",
+        "루트 노드(최댓값)를 배열 맨 끝 원소와 맞바꾸고, 힙의 유효 크기를 1 줄입니다.",
+        "루트부터 힙 성질을 복원(Heapify)하는 과정을 힙 크기가 1이 될 때까지 반복합니다."
+      ],
+      pros: "추가 메모리가 전혀 없는 제자리 정렬이면서 항상 O(n log n)을 엄격히 보장합니다.",
+      cons: "비순차적 메모리 참조로 인해 퀵 정렬에 비해 실제 캐시 효율이 다소 떨어집니다.",
+      timeBest: "O(n log n)",
+      timeAvg: "O(n log n)",
+      timeWorst: "O(n log n)",
+      space: "O(1)",
+      stable: false,
+      codeLines: [
+        "heapSort(arr):",
+        "  buildMaxHeap(arr)",
+        "  for i = n - 1 down to 1:",
+        "    swap(arr[0], arr[i])",
+        "    heapify(arr, 0, i)"
+      ]
+    }
+  };
+
   const ALGOS = ["Bubble", "Insertion", "Selection", "Merge", "Quick", "Heap"];
   let current = "Bubble";
   let base = [];
@@ -187,27 +802,112 @@
   let paused = false;
   let stopFlag = false;
   let resume = null;
+  let r0 = null;
   let startTime = 0;
-  let timer = null;
+  let is3d = true;
+  let isSoundOn = false;
+  let audioCtx = null;
 
+  // DOM Elements
   const barsEl = document.getElementById("bars");
+  const stageEl = document.getElementById("stage");
   const algoGroup = document.getElementById("algoGroup");
   const startBtn = document.getElementById("startBtn");
+  const stepBtn = document.getElementById("stepBtn");
   const resetBtn = document.getElementById("resetBtn");
+  const toggle3dBtn = document.getElementById("toggle3dBtn");
+  const soundBtn = document.getElementById("soundBtn");
+  const modeBadge = document.getElementById("modeBadge");
   const sizeRange = document.getElementById("sizeRange");
   const sizeVal = document.getElementById("sizeVal");
   const speedRange = document.getElementById("speedRange");
   const speedVal = document.getElementById("speedVal");
+  const presetSelect = document.getElementById("presetSelect");
+  
+  // Stats
   const statAlgo = document.getElementById("statAlgo");
   const statCmp = document.getElementById("statCmp");
   const statSwap = document.getElementById("statSwap");
   const statTime = document.getElementById("statTime");
+  const statTimeCmp = document.getElementById("statTimeCmp");
+  const statSpaceCmp = document.getElementById("statSpaceCmp");
   const pulse = document.getElementById("pulse");
   const statusText = document.getElementById("statusText");
 
+  // Educational DOM
+  const eduAlgoName = document.getElementById("eduAlgoName");
+  const eduAlgoSub = document.getElementById("eduAlgoSub");
+  const badgeTime = document.getElementById("badgeTime");
+  const badgeSpace = document.getElementById("badgeSpace");
+  const badgeStable = document.getElementById("badgeStable");
+  const eduAnalogy = document.getElementById("eduAnalogy");
+  const eduSteps = document.getElementById("eduSteps");
+  const eduPros = document.getElementById("eduPros");
+  const eduCons = document.getElementById("eduCons");
+  const eduCode = document.getElementById("eduCode");
+  const tdBest = document.getElementById("tdBest");
+  const tdAvg = document.getElementById("tdAvg");
+  const tdWorst = document.getElementById("tdWorst");
+  const tdSpace = document.getElementById("tdSpace");
+  const tdStable = document.getElementById("tdStable");
+
+  // ---- Audio Synthesizer ----
+  function playNote(val, maxVal) {
+    if (!isSoundOn) return;
+    try {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === "suspended") audioCtx.resume();
+
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      const freq = 180 + (val / maxVal) * 720; // 180Hz to 900Hz
+      
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+      gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.05);
+
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.05);
+    } catch (e) {}
+  }
+
+  // Sound Toggle
+  soundBtn.addEventListener("click", () => {
+    isSoundOn = !isSoundOn;
+    if (isSoundOn) {
+      soundBtn.classList.add("active");
+      soundBtn.innerHTML = "<span>🔊 소리 켜짐</span>";
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+    } else {
+      soundBtn.classList.remove("active");
+      soundBtn.innerHTML = "<span>🔇 소리 꺼짐</span>";
+    }
+  });
+
+  // 3D Mode Toggle
+  toggle3dBtn.addEventListener("click", () => {
+    is3d = !is3d;
+    if (is3d) {
+      toggle3dBtn.classList.add("active");
+      stageEl.classList.add("stage-3d-active");
+      modeBadge.textContent = "3D MODE";
+    } else {
+      toggle3dBtn.classList.remove("active");
+      stageEl.classList.remove("stage-3d-active");
+      modeBadge.textContent = "2D MODE";
+    }
+  });
+
+  // Algorithm Buttons Setup
   ALGOS.forEach(name => {
     const b = document.createElement("button");
-    b.textContent = name + " Sort";
+    b.textContent = ALGO_DATA[name].en;
     b.dataset.algo = name;
     if (name === current) b.classList.add("active");
     b.addEventListener("click", () => {
@@ -215,29 +915,97 @@
       current = name;
       [...algoGroup.children].forEach(c => c.classList.remove("active"));
       b.classList.add("active");
-      statAlgo.textContent = name + " Sort";
+      updateEducationalPanel(name);
       buildArray();
     });
     algoGroup.appendChild(b);
   });
 
+  function updateEducationalPanel(algoKey) {
+    const data = ALGO_DATA[algoKey];
+    statAlgo.textContent = `${data.en} (${data.name})`;
+    statTimeCmp.textContent = data.timeAvg;
+    statSpaceCmp.textContent = data.space;
+
+    eduAlgoName.textContent = `${data.name} (${data.en})`;
+    eduAlgoSub.textContent = data.sub;
+    badgeTime.textContent = `시간: ${data.timeAvg}`;
+    badgeSpace.textContent = `공간: ${data.space}`;
+
+    if (data.stable) {
+      badgeStable.className = "pill pill-stable";
+      badgeStable.textContent = "안정 정렬 (Stable)";
+      tdStable.innerHTML = '<span style="color: #34d399;">Stable (안정)</span>';
+    } else {
+      badgeStable.className = "pill pill-unstable";
+      badgeStable.textContent = "불안정 정렬 (Unstable)";
+      tdStable.innerHTML = '<span style="color: #f87171;">Unstable (불안정)</span>';
+    }
+
+    eduAnalogy.textContent = data.analogy;
+    eduSteps.innerHTML = data.steps.map(s => `<li>${s}</li>`).join("");
+    eduPros.textContent = data.pros;
+    eduCons.textContent = data.cons;
+
+    tdBest.textContent = data.timeBest;
+    tdAvg.textContent = data.timeAvg;
+    tdWorst.textContent = data.timeWorst;
+    tdSpace.textContent = data.space;
+
+    // Pseudocode
+    eduCode.innerHTML = data.codeLines.map((line, idx) => 
+      `<div class="code-line" id="codeLine_${idx}">${escapeHtml(line)}</div>`
+    ).join("");
+  }
+
+  function escapeHtml(str) {
+    return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  function highlightCodeLine(lineIdx) {
+    const lines = eduCode.querySelectorAll(".code-line");
+    lines.forEach((l, idx) => {
+      if (idx === lineIdx) l.classList.add("active");
+      else l.classList.remove("active");
+    });
+  }
+
   function delayForSpeed() {
     const v = Number(speedRange.value); // 0..100
     speedVal.textContent =
-      v < 20 ? "Very slow" : v < 45 ? "Slow" : v < 70 ? "Normal" : v < 90 ? "Fast" : "Very fast";
-    // map to ms between steps
-    return Math.round(320 - v * 3.0);
+      v < 20 ? "매우 느림" : v < 45 ? "느림" : v < 70 ? "보통" : v < 90 ? "빠름" : "초고속";
+    return Math.round(340 - v * 3.1);
   }
 
   function sleep(ms) {
     return new Promise(res => setTimeout(res, ms));
   }
 
+  // Array Generation with Presets
   function buildArray() {
     const n = Number(sizeRange.value);
     sizeVal.textContent = n;
+    const preset = presetSelect.value;
     base = [];
-    for (let i = 0; i < n; i++) base.push(Math.floor(Math.random() * 95) + 5);
+
+    if (preset === "random") {
+      for (let i = 0; i < n; i++) base.push(Math.floor(Math.random() * 92) + 8);
+    } else if (preset === "nearly") {
+      for (let i = 0; i < n; i++) base.push(Math.floor((i + 1) * (95 / n)) + 5);
+      // swap a few random pairs
+      const swaps = Math.max(2, Math.floor(n * 0.08));
+      for (let k = 0; k < swaps; k++) {
+        const i = Math.floor(Math.random() * n);
+        const j = Math.floor(Math.random() * n);
+        const t = base[i]; base[i] = base[j]; base[j] = t;
+      }
+    } else if (preset === "reversed") {
+      for (let i = 0; i < n; i++) base.push(Math.floor((n - i) * (95 / n)) + 5);
+    } else if (preset === "few_unique") {
+      const vals = [15, 35, 55, 75, 95];
+      for (let i = 0; i < n; i++) base.push(vals[Math.floor(Math.random() * vals.length)]);
+    }
+
     arr = base.slice();
     stats = { comparisons: 0, swaps: 0 };
     updateStats();
@@ -245,27 +1013,40 @@
   }
 
   function render() {
-    const max = Math.max(...arr);
+    const max = Math.max(...arr, 1);
     barsEl.innerHTML = "";
     for (let i = 0; i < arr.length; i++) {
+      const col = document.createElement("div");
+      col.className = "bar-col";
       const bar = document.createElement("div");
       bar.className = "bar";
-      const h = (arr[i] / max) * 410;
-      bar.style.height = h + "px";
-      barsEl.appendChild(bar);
+      const h = (arr[i] / max) * 360;
+      bar.style.height = Math.max(h, 4) + "px";
+      col.appendChild(bar);
+      barsEl.appendChild(col);
     }
   }
 
   function renderWithHighlights(hl) {
-    const max = Math.max(...arr);
-    const children = barsEl.children;
+    const max = Math.max(...arr, 1);
+    const cols = barsEl.children;
     for (let i = 0; i < arr.length; i++) {
-      const bar = children[i];
-      const h = (arr[i] / max) * 410;
-      bar.style.height = h + "px";
-      bar.className = "bar" + (hl.sorted ? " sorted" : "") +
-        (hl.compare && hl.compare.has(i) ? " compare" : "") +
-        (hl.swap && hl.swap.has(i) ? " swap" : "");
+      const bar = cols[i]?.firstElementChild;
+      if (!bar) continue;
+      const h = (arr[i] / max) * 360;
+      bar.style.height = Math.max(h, 4) + "px";
+      
+      let cls = "bar";
+      if (hl.sorted && hl.sorted.has(i)) cls += " sorted";
+      if (hl.compare && hl.compare.has(i)) {
+        cls += " compare";
+        playNote(arr[i], max);
+      }
+      if (hl.swap && hl.swap.has(i)) {
+        cls += " swap";
+        playNote(arr[i], max);
+      }
+      bar.className = cls;
     }
   }
 
@@ -284,62 +1065,10 @@
     statusText.textContent = text;
   }
 
-  // Generator step interface: yields {hl:{sorted:Set, compare:Set, swap:Set}}
-  async function runSort() {
-    stopFlag = false;
-    paused = false;
-    running = true;
-    startBtn.textContent = "Pause";
-    startBtn.classList.add("paused");
-    setStatus("running", "Sorting…");
-    startTime = performance.now();
-
-    const sorted = new Set();
-    const makeCtx = () => ({
-      sorted,
-      cmp() { stats.comparisons++; },
-      swap(i, j) {
-        stats.swaps++;
-        const t = arr[i]; arr[i] = arr[j]; arr[j] = t;
-      },
-      step() {
-        return (async function () {
-          const gen = curGen;
-          while (true) {
-            const { value, done } = gen.next();
-            if (done) break;
-            const hl = value.hl;
-            renderWithHighlights(hl);
-            updateStats();
-            updateStatsTime();
-            await stepSleep();
-            if (stopFlag) return false;
-          }
-          return true;
-        })();
-      }
-    });
-
-    const ctx = makeCtx();
-    const ok = await ctx.step();
-
-    // finish
-    for (let i = 0; i < arr.length; i++) sorted.add(i);
-    renderWithHighlights({ sorted, compare: null, swap: null });
-    updateStats();
-
-    if (!stopFlag) {
-      setStatus("running", "Done!");
-    } else {
-      setStatus("idle", "Paused");
-    }
-    running = false;
-    startBtn.textContent = "Start";
-    startBtn.classList.remove("paused");
-  }
-
+  // Stepping Generator Sort
   let factory = null;
   let curGen = null;
+  let sortedSet = new Set();
 
   async function stepSleep() {
     const ms = delayForSpeed();
@@ -355,31 +1084,111 @@
       await sleep(Math.min(20, ms));
     }
   }
-  let r0 = null;
 
+  async function runSort() {
+    stopFlag = false;
+    paused = false;
+    running = true;
+    startBtn.textContent = "일시정지";
+    startBtn.classList.add("paused");
+    setStatus("running", "정렬 진행 중…");
+    startTime = performance.now();
+
+    sortedSet = new Set();
+
+    while (true) {
+      const { value, done } = curGen.next();
+      if (done || stopFlag) break;
+      const hl = value.hl;
+      if (value.line !== undefined) highlightCodeLine(value.line);
+      renderWithHighlights(hl);
+      updateStats();
+      updateStatsTime();
+      await stepSleep();
+      if (stopFlag) return;
+    }
+
+    // Finish celebration
+    if (!stopFlag) {
+      highlightCodeLine(-1);
+      for (let i = 0; i < arr.length; i++) {
+        sortedSet.add(i);
+        renderWithHighlights({ sorted: sortedSet, compare: null, swap: null });
+        playNote(arr[i], Math.max(...arr));
+        await sleep(Math.min(25, 400 / arr.length));
+      }
+      setStatus("running", "정렬 완료! (Done)");
+      pulse.classList.remove("running");
+    } else {
+      setStatus("idle", "일시정지됨");
+    }
+    running = false;
+    startBtn.textContent = "정렬 시작";
+    startBtn.classList.remove("paused");
+  }
+
+  // Start / Pause
   startBtn.addEventListener("click", async () => {
     if (paused) {
-      // resume
+      // Resume
       paused = false;
-      startBtn.textContent = "Pause";
-      setStatus("running", "Sorting…");
+      startBtn.textContent = "일시정지";
+      startBtn.classList.add("paused");
+      setStatus("running", "정렬 진행 중…");
       if (r0) { const r = r0; r0 = null; resume = null; r(); }
     } else if (!running) {
-      // start
-      if (!factory) factory = makeFactory(current);
+      // Start fresh
+      factory = makeFactory(current);
       curGen = factory();
       arr = base.slice();
       stats = { comparisons: 0, swaps: 0 };
       updateStats();
       await runSort();
     } else {
-      // pause
+      // Pause
       paused = true;
-      startBtn.textContent = "Resume";
-      setStatus("idle", "Paused");
+      startBtn.textContent = "계속 진행";
+      startBtn.classList.remove("paused");
+      setStatus("idle", "일시정지됨");
     }
   });
 
+  // Step button (execute 1 step)
+  stepBtn.addEventListener("click", () => {
+    if (!running) {
+      if (!curGen) {
+        factory = makeFactory(current);
+        curGen = factory();
+        arr = base.slice();
+        stats = { comparisons: 0, swaps: 0 };
+        updateStats();
+        startTime = performance.now();
+      }
+      const { value, done } = curGen.next();
+      if (!done && value) {
+        if (value.line !== undefined) highlightCodeLine(value.line);
+        renderWithHighlights(value.hl);
+        updateStats();
+        updateStatsTime();
+        setStatus("idle", "한 단계 실행");
+      } else {
+        setStatus("idle", "정렬 완료");
+        for (let i = 0; i < arr.length; i++) sortedSet.add(i);
+        renderWithHighlights({ sorted: sortedSet });
+      }
+    } else if (paused) {
+      // Advance single step while paused
+      const { value, done } = curGen.next();
+      if (!done && value) {
+        if (value.line !== undefined) highlightCodeLine(value.line);
+        renderWithHighlights(value.hl);
+        updateStats();
+        updateStatsTime();
+      }
+    }
+  });
+
+  // Reset
   resetBtn.addEventListener("click", () => {
     stopFlag = true;
     paused = false;
@@ -389,12 +1198,12 @@
       curGen = null;
       paused = false;
       running = false;
-      startBtn.textContent = "Start";
+      startBtn.textContent = "정렬 시작";
       startBtn.classList.remove("paused");
+      highlightCodeLine(-1);
       buildArray();
-      statAlgo.textContent = current + " Sort";
-      setStatus("idle", "Ready");
-    }, 30);
+      setStatus("idle", "대기 중");
+    }, 40);
   });
 
   sizeRange.addEventListener("input", () => {
@@ -402,8 +1211,12 @@
     buildArray();
   });
   speedRange.addEventListener("input", delayForSpeed);
+  presetSelect.addEventListener("change", () => {
+    if (running) return;
+    buildArray();
+  });
 
-  // ---- Algorithms ----
+  // ---- Algorithms with Line Highlighting ----
   function makeFactory(name) {
     return function () {
       switch (name) {
@@ -422,31 +1235,37 @@
     for (let i = 0; i < n - 1; i++) {
       for (let j = 0; j < n - i - 1; j++) {
         stats.comparisons++;
-        yield { hl: { sorted: null, compare: new Set([j, j + 1]), swap: null } };
+        yield { line: 2, hl: { sorted: sortedSet, compare: new Set([j, j + 1]), swap: null } };
         if (arr[j] > arr[j + 1]) {
           stats.swaps++;
           const t = arr[j]; arr[j] = arr[j + 1]; arr[j + 1] = t;
-          yield { hl: { sorted: null, compare: null, swap: new Set([j, j + 1]) } };
+          yield { line: 3, hl: { sorted: sortedSet, compare: null, swap: new Set([j, j + 1]) } };
         }
       }
+      sortedSet.add(n - 1 - i);
     }
+    sortedSet.add(0);
   }
 
   function* insertionSort() {
     const n = arr.length;
+    sortedSet.add(0);
     for (let i = 1; i < n; i++) {
       let j = i;
       const key = arr[j];
+      yield { line: 1, hl: { sorted: sortedSet, compare: new Set([i]), swap: null } };
       while (j > 0 && arr[j - 1] > key) {
         stats.comparisons++;
-        yield { hl: { sorted: null, compare: new Set([j - 1, j]), swap: null } };
+        yield { line: 2, hl: { sorted: sortedSet, compare: new Set([j - 1, j]), swap: null } };
         arr[j] = arr[j - 1];
         stats.swaps++;
-        yield { hl: { sorted: null, compare: null, swap: new Set([j]) } };
+        yield { line: 3, hl: { sorted: sortedSet, compare: null, swap: new Set([j]) } };
         j--;
       }
-      stats.comparisons++;
+      if (j > 0) stats.comparisons++;
       arr[j] = key;
+      yield { line: 4, hl: { sorted: sortedSet, compare: null, swap: new Set([j]) } };
+      for (let k = 0; k <= i; k++) sortedSet.add(k);
     }
   }
 
@@ -454,22 +1273,29 @@
     const n = arr.length;
     for (let i = 0; i < n - 1; i++) {
       let min = i;
+      yield { line: 1, hl: { sorted: sortedSet, compare: new Set([i]), swap: null } };
       for (let j = i + 1; j < n; j++) {
         stats.comparisons++;
-        yield { hl: { sorted: null, compare: new Set([min, j]), swap: null } };
-        if (arr[j] < arr[min]) min = j;
+        yield { line: 3, hl: { sorted: sortedSet, compare: new Set([min, j]), swap: null } };
+        if (arr[j] < arr[min]) {
+          min = j;
+          yield { line: 3, hl: { sorted: sortedSet, compare: new Set([min]), swap: null } };
+        }
       }
       if (min !== i) {
         stats.swaps++;
         const t = arr[i]; arr[i] = arr[min]; arr[min] = t;
-        yield { hl: { sorted: null, compare: null, swap: new Set([i, min]) } };
+        yield { line: 4, hl: { sorted: sortedSet, compare: null, swap: new Set([i, min]) } };
       }
+      sortedSet.add(i);
     }
+    sortedSet.add(n - 1);
   }
 
   function* mergeSort(l, r) {
     if (l >= r) return;
     const mid = (l + r) >> 1;
+    yield { line: 2, hl: { sorted: sortedSet, compare: new Set([l, r]), swap: null } };
     yield* mergeSort(l, mid);
     yield* mergeSort(mid + 1, r);
     yield* merge(l, mid, r);
@@ -479,24 +1305,39 @@
     const left = arr.slice(l, mid + 1);
     const right = arr.slice(mid + 1, r + 1);
     let i = 0, j = 0, k = l;
+    yield { line: 5, hl: { sorted: sortedSet, compare: new Set([l, r]), swap: null } };
     while (i < left.length && j < right.length) {
       stats.comparisons++;
-      yield { hl: { sorted: null, compare: new Set([l + i, mid + 1 + j]), swap: null } };
-      if (left[i] <= right[j]) { arr[k] = left[i]; i++; }
-      else { arr[k] = right[j]; j++; }
+      yield { line: 5, hl: { sorted: sortedSet, compare: new Set([l + i, mid + 1 + j]), swap: null } };
+      if (left[i] <= right[j]) {
+        arr[k] = left[i]; i++;
+      } else {
+        arr[k] = right[j]; j++;
+      }
       stats.swaps++;
-      yield { hl: { sorted: null, compare: null, swap: new Set([k]) } };
+      yield { line: 5, hl: { sorted: sortedSet, compare: null, swap: new Set([k]) } };
       k++;
     }
-    while (i < left.length) { arr[k] = left[i]; stats.swaps++;
-      yield { hl: { sorted: null, compare: null, swap: new Set([k]) } }; i++; k++; }
-    while (j < right.length) { arr[k] = right[j]; stats.swaps++;
-      yield { hl: { sorted: null, compare: null, swap: new Set([k]) } }; j++; k++; }
+    while (i < left.length) {
+      arr[k] = left[i]; stats.swaps++;
+      yield { line: 5, hl: { sorted: sortedSet, compare: null, swap: new Set([k]) } };
+      i++; k++;
+    }
+    while (j < right.length) {
+      arr[k] = right[j]; stats.swaps++;
+      yield { line: 5, hl: { sorted: sortedSet, compare: null, swap: new Set([k]) } };
+      j++; k++;
+    }
   }
 
   function* quickSort(l, r) {
-    if (l >= r) return;
+    if (l >= r) {
+      if (l >= 0 && l < arr.length) sortedSet.add(l);
+      return;
+    }
+    yield { line: 2, hl: { sorted: sortedSet, compare: new Set([l, r]), swap: null } };
     const pi = yield* partition(l, r);
+    sortedSet.add(pi);
     yield* quickSort(l, pi - 1);
     yield* quickSort(pi + 1, r);
   }
@@ -504,50 +1345,61 @@
   function* partition(l, r) {
     const pivot = arr[r];
     let i = l - 1;
+    yield { line: 0, hl: { sorted: sortedSet, compare: new Set([r]), swap: null } };
     for (let j = l; j < r; j++) {
       stats.comparisons++;
-      yield { hl: { sorted: null, compare: new Set([j, r]), swap: null } };
+      yield { line: 1, hl: { sorted: sortedSet, compare: new Set([j, r]), swap: null } };
       if (arr[j] < pivot) {
         i++;
         stats.swaps++;
         const t = arr[i]; arr[i] = arr[j]; arr[j] = t;
-        yield { hl: { sorted: null, compare: null, swap: new Set([i, j]) } };
+        yield { line: 2, hl: { sorted: sortedSet, compare: null, swap: new Set([i, j]) } };
       }
     }
     stats.swaps++;
     const t = arr[i + 1]; arr[i + 1] = arr[r]; arr[r] = t;
-    yield { hl: { sorted: null, compare: null, swap: new Set([i + 1, r]) } };
+    yield { line: 2, hl: { sorted: sortedSet, compare: null, swap: new Set([i + 1, r]) } };
     return i + 1;
   }
 
   function* heapSort() {
     const n = arr.length;
-    for (let i = n >> 1; i >= 0; i--) yield* heapify(n, i);
+    yield { line: 1, hl: { sorted: sortedSet, compare: null, swap: null } };
+    for (let i = (n >> 1) - 1; i >= 0; i--) yield* heapify(n, i);
     for (let i = n - 1; i > 0; i--) {
       stats.swaps++;
       const t = arr[0]; arr[0] = arr[i]; arr[i] = t;
-      yield { hl: { sorted: null, compare: null, swap: new Set([0, i]) } };
+      sortedSet.add(i);
+      yield { line: 3, hl: { sorted: sortedSet, compare: null, swap: new Set([0, i]) } };
       yield* heapify(i, 0);
     }
+    sortedSet.add(0);
   }
 
   function* heapify(n, i) {
     while (true) {
       let largest = i;
       const l = 2 * i + 1, r = 2 * i + 2;
-      if (l < n) { stats.comparisons++; if (arr[l] > arr[largest]) largest = l; }
-      if (r < n) { stats.comparisons++; if (arr[r] > arr[largest]) largest = r; }
+      if (l < n) {
+        stats.comparisons++;
+        if (arr[l] > arr[largest]) largest = l;
+      }
+      if (r < n) {
+        stats.comparisons++;
+        if (arr[r] > arr[largest]) largest = r;
+      }
       if (largest === i) break;
-      yield { hl: { sorted: null, compare: new Set([i, largest]), swap: null } };
+      yield { line: 4, hl: { sorted: sortedSet, compare: new Set([i, largest]), swap: null } };
       stats.swaps++;
       const t = arr[i]; arr[i] = arr[largest]; arr[largest] = t;
-      yield { hl: { sorted: null, compare: null, swap: new Set([i, largest]) } };
+      yield { line: 4, hl: { sorted: sortedSet, compare: null, swap: new Set([i, largest]) } };
       i = largest;
     }
   }
 
+  // Initial Boot
+  updateEducationalPanel(current);
   buildArray();
-  statAlgo.textContent = current + " Sort";
 })();
 </script>
 </body>
