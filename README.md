@@ -90,4 +90,5 @@ python3 -m http.server 8080
 ## 👤 Author
 
 * **우동호 (woodongho)**
+  * Email: [uhotax@gmail.com](mailto:uhotax@gmail.com)
   * GitHub: [@woodongho](https://github.com/woodongho)
